@@ -1,0 +1,14 @@
+[
+  { 
+    "id": "1", 
+    "name": "ATN BANGLA", 
+    "img": "http://103.144.89.251/assets/images/ATN BANGLA1745044183.png",
+    "url": "https://your-m3u8-link-1.m3u8"
+  },
+  { 
+    "id": "2", 
+    "name": "CHANNEL I", 
+    "img": "https://example.com/channel-i.png",
+    "url": "https://your-m3u8-link-2.m3u8"
+  }
+]
