@@ -1,9 +1,9 @@
 [
   { 
     "id": "1", 
-    "name": "ATN BANGLA", 
-    "img": "http://103.144.89.251/assets/images/ATN BANGLA1745044183.png",
-    "url": "https://your-m3u8-link-1.m3u8"
+    "name": "TSports", 
+    "img": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQEDmzU0EZ9DNjoKhhopCo-b5SxCmRQYAjPQ&s",
+    "url": "http://103.175.242.10:8080/tsports1/index.m3u8"
   },
   { 
     "id": "2", 
