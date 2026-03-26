@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV এডমিন প্যানেল - mdabdullahsk</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .admin-box { max-width: 500px; margin: 40px auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #94a3b8; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #334155; border-radius: 8px; box-sizing: border-box; background: #0f172a; color: white; outline: none; }
+        input:focus { border-color: #38bdf8; }
+        button { background: #0284c7; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #0ea5e9; }
+        #status { text-align: center; font-weight: bold; margin-top: 15px; padding: 10px; border-radius: 5px; font-size: 14px; }
+        .success { background: #065f46; color: #34d399; }
+        .error { background: #7f1d1d; color: #f87171; }
+    </style>
+</head>
+<body>
+
+<div class="admin-box">
+    <h2>চ্যানেল অ্যাডমিন প্যানেল</h2>
+    
+    <label>চ্যানেলের নাম</label>
+    <input type="text" id="chName" placeholder="উদা: Somoy TV HD">
+    
+    <label>লোগো লিঙ্ক (Direct URL)</label>
+    <input type="text" id="chLogo" placeholder="https://example.com/logo.png">
+    
+    <label>ভিডিও লিঙ্ক (m3u8)</label>
+    <input type="text" id="chUrl" placeholder="https://server.com/live.m3u8">
+    
+    <label>ক্যাটাগরি</label>
+    <select id="chCategory">
+        <option value="Entertainment">Entertainment</option>
+        <option value="News">News</option>
+        <option value="Sports">Sports</option>
+        <option value="Movies">Movies</option>
+        <option value="Music">Music</option>
+        <option value="Kids">Kids</option>
+    </select>
+
+    <button id="saveBtn" onclick="updateGitHub()">সার্ভারে সেভ করুন</button>
+    <div id="status"></div>
+</div>
+
+<script>
+// আপনার কনফিগারেশন
+const GITHUB_TOKEN = "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";
+const REPO_OWNER = "mdabdullahsk";
+const REPO_NAME = "channels_list";
+const FILE_PATH = "channels.json";
+
+async function updateGitHub() {
+    const name = document.getElementById('chName').value.trim();
+    const logo = document.getElementById('chLogo').value.trim();
+    const url = document.getElementById('chUrl').value.trim();
+    const category = document.getElementById('chCategory').value;
+    const status = document.getElementById('status');
+    const btn = document.getElementById('saveBtn');
+
+    if(!name || !url) {
+        showStatus("নাম এবং ভিডিও লিঙ্ক অবশ্যই দিতে হবে!", "error");
+        return;
+    }
+
+    // বাটন ডিজেবল করা
+    btn.disabled = true;
+    btn.innerText = "সেভ হচ্ছে...";
+    showStatus("GitHub-এর সাথে যোগাযোগ করা হচ্ছে...", "");
+
+    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+    try {
+        // ১. বর্তমান ফাইলটি ডাউনলোড করা (SHA এবং কন্টেন্ট পাওয়ার জন্য)
+        const getRes = await fetch(apiUrl, {
+            headers: { "Authorization": `token ${GITHUB_TOKEN}` }
+        });
+        
+        if (!getRes.ok) throw new Error("ফাইলটি খুঁজে পাওয়া যায়নি বা টোকেন ইনভ্যালিড।");
+        
+        const fileData = await getRes.json();
+        const sha = fileData.sha;
+        
+        // Base64 থেকে JSON-এ রূপান্তর (UTF-8 হ্যান্ডলিং সহ)
+        const currentContent = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+
+        // ২. নতুন ডাটা তৈরি করা
+        const newChannel = {
+            id: Date.now(),
+            name: name,
+            logo: logo || "",
+            url: url,
+            category: category
+        };
+        
+        // নতুন চ্যানেল লিস্টে যুক্ত করা
+        currentContent.channels.push(newChannel);
+        
+        // ৩. GitHub-এ ফাইল আপডেট (পুশ) করা
+        const updateRes = await fetch(apiUrl, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${GITHUB_TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `Added new channel: ${name}`,
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2)))),
+                sha: sha
+            })
+        });
+
+        if(updateRes.ok) {
+            showStatus("অভিনন্দন! চ্যানেলটি সফলভাবে যুক্ত হয়েছে।", "success");
+            // ইনপুট বক্স খালি করা
+            document.getElementById('chName').value = "";
+            document.getElementById('chLogo').value = "";
+            document.getElementById('chUrl').value = "";
+        } else {
+            throw new Error("GitHub আপডেট ব্যর্থ হয়েছে।");
+        }
+
+    } catch (err) {
+        showStatus("সমস্যা: " + err.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "সার্ভারে সেভ করুন";
+    }
+}
+
+function showStatus(msg, type) {
+    const status = document.getElementById('status');
+    status.innerText = msg;
+    status.className = type; // success বা error ক্লাস যুক্ত করা
+}
+</script>
+
+</body>
+</html>
